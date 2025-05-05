@@ -1,0 +1,769 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model announcements {
+  id        Int       @id @default(autoincrement())
+  priority  Int
+  title     String
+  text      String    @db.Text
+  mediaPath String
+  mediaName String
+  companyId Int
+  status    Boolean
+  createdAt DateTime  @default(now())
+  updatedAt DateTime
+  companies companies @relation(fields: [companyId], references: [id], map: "Announcements_companyId_fkey")
+
+  @@index([companyId], map: "Announcements_companyId_fkey")
+}
+
+model baileys {
+  id         Int       @id @default(autoincrement())
+  contacts   String?
+  chats      String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime
+  whatsappId Int
+  whatsapps  whatsapps @relation(fields: [whatsappId], references: [id], map: "Baileys_whatsappId_fkey")
+
+  @@index([whatsappId], map: "Baileys_whatsappId_fkey")
+}
+
+model baileyschats {
+  id                    Int       @id @default(autoincrement())
+  jid                   String
+  conversationTimestamp Int
+  unreadCount           Int       @default(0)
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime
+  whatsappId            Int
+  whatsapps             whatsapps @relation(fields: [whatsappId], references: [id], map: "BaileysChats_whatsappId_fkey")
+
+  @@index([whatsappId], map: "BaileysChats_whatsappId_fkey")
+}
+
+model campaigns {
+  id                   Int                @id @default(autoincrement())
+  name                 String
+  message1             String             @default("")
+  message2             String             @default("")
+  message3             String             @default("")
+  message4             String             @default("")
+  message5             String             @default("")
+  confirmationMessage1 String             @default("")
+  confirmationMessage2 String             @default("")
+  confirmationMessage3 String             @default("")
+  confirmationMessage4 String             @default("")
+  confirmationMessage5 String             @default("")
+  status               String             @default("INATIVA")
+  confirmation         Boolean
+  mediaPath            String
+  mediaName            String
+  scheduledAt          DateTime
+  completedAt          DateTime
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime
+  companyId            Int
+  contactListId        Int
+  whatsappId           Int
+  fileListId           Int
+  companies            companies          @relation(fields: [companyId], references: [id], map: "Campaigns_companyId_fkey")
+  contactlists         contactlists       @relation(fields: [contactListId], references: [id], map: "Campaigns_contactListId_fkey")
+  files                files              @relation(fields: [fileListId], references: [id], map: "Campaigns_fileListId_fkey")
+  whatsapps            whatsapps          @relation(fields: [whatsappId], references: [id], map: "Campaigns_whatsappId_fkey")
+  campaignshipping     campaignshipping[]
+
+  @@index([companyId], map: "Campaigns_companyId_fkey")
+  @@index([contactListId], map: "Campaigns_contactListId_fkey")
+  @@index([fileListId], map: "Campaigns_fileListId_fkey")
+  @@index([whatsappId], map: "Campaigns_whatsappId_fkey")
+}
+
+model campaignsettings {
+  id        Int       @id @default(autoincrement())
+  key       String
+  value     String
+  companyId Int
+  createdAt DateTime  @default(now())
+  updatedAt DateTime
+  companies companies @relation(fields: [companyId], references: [id], map: "CampaignSettings_companyId_fkey")
+
+  @@index([companyId], map: "CampaignSettings_companyId_fkey")
+}
+
+model campaignshipping {
+  id                      Int              @id @default(autoincrement())
+  jobId                   String
+  number                  String
+  message                 String
+  confirmationMessage     String
+  confirmation            Boolean
+  contactId               Int
+  campaignId              Int
+  confirmationRequestedAt DateTime
+  confirmedAt             DateTime
+  deliveredAt             DateTime
+  createdAt               DateTime         @default(now())
+  updatedAt               DateTime
+  campaigns               campaigns        @relation(fields: [campaignId], references: [id], map: "CampaignShipping_campaignId_fkey")
+  contactlistitems        contactlistitems @relation(fields: [contactId], references: [id], map: "CampaignShipping_contactId_fkey")
+
+  @@index([campaignId], map: "CampaignShipping_campaignId_fkey")
+  @@index([contactId], map: "CampaignShipping_contactId_fkey")
+}
+
+model chatmessages {
+  id        Int      @id @default(autoincrement())
+  chatId    Int
+  senderId  Int
+  message   String   @default("")
+  mediaPath String
+  mediaName String
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+  chats     chats    @relation(fields: [chatId], references: [id], map: "ChatMessages_chatId_fkey")
+  users     users    @relation(fields: [senderId], references: [id], map: "ChatMessages_senderId_fkey")
+
+  @@index([chatId], map: "ChatMessages_chatId_fkey")
+  @@index([senderId], map: "ChatMessages_senderId_fkey")
+}
+
+model chats {
+  id           Int            @id @default(autoincrement())
+  uuid         String
+  title        String         @default("")
+  ownerId      Int
+  lastMessage  String         @default("")
+  companyId    Int
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime
+  chatmessages chatmessages[]
+  companies    companies      @relation(fields: [companyId], references: [id], map: "Chats_companyId_fkey")
+  users        users          @relation(fields: [ownerId], references: [id], map: "Chats_ownerId_fkey")
+  chatusers    chatusers[]
+
+  @@index([companyId], map: "Chats_companyId_fkey")
+  @@index([ownerId], map: "Chats_ownerId_fkey")
+}
+
+model chatusers {
+  id        Int      @id @default(autoincrement())
+  chatId    Int
+  userId    Int
+  unreads   Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+  chats     chats    @relation(fields: [chatId], references: [id], map: "ChatUsers_chatId_fkey")
+  users     users    @relation(fields: [userId], references: [id], map: "ChatUsers_userId_fkey")
+
+  @@index([chatId], map: "ChatUsers_chatId_fkey")
+  @@index([userId], map: "ChatUsers_userId_fkey")
+}
+
+model companies {
+  id                 Int                  @id @default(autoincrement())
+  name               String
+  phone              String?
+  email              String?               @unique
+  status             Boolean?
+  dueDate            String
+  recurrence         String?
+  planId             Int
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime
+  announcements      announcements[]
+  campaigns          campaigns[]
+  campaignsettings   campaignsettings[]
+  chats              chats[]
+  plans              plans                @relation(fields: [planId], references: [id])
+  contactlists       contactlists[]
+  contacts           contacts[]
+  files              files[]
+  messages           messages[]
+  prompts            prompts[]
+  queue_integrations queue_integrations[]
+  queues             queues[]
+  quick_messages     quick_messages[]
+  schedules          schedules[]
+  settings           settings[]
+  tags               tags[]
+  tickets            tickets[]
+  tickettraking      tickettraking[]
+  userratings        userratings[]
+  users              users[]
+  whatsapps          whatsapps[]
+
+  @@index([planId], map: "companies_planId_fkey")
+}
+
+model contact_custom_fields {
+  id        Int      @id @default(autoincrement())
+  name      String
+  value     String
+  contactId Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+  contacts  contacts @relation(fields: [contactId], references: [id])
+
+  @@index([contactId], map: "contact_custom_fields_contactId_fkey")
+}
+
+model contactlistitems {
+  id               Int                @id @default(autoincrement())
+  contactListId    Int
+  campaignshipping campaignshipping[]
+  contactlists     contactlists       @relation(fields: [contactListId], references: [id], map: "ContactListItems_contactListId_fkey")
+
+  @@index([contactListId], map: "ContactListItems_contactListId_fkey")
+}
+
+model contactlists {
+  id               Int                @id @default(autoincrement())
+  name             String
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime
+  companyId        Int
+  campaigns        campaigns[]
+  contactlistitems contactlistitems[]
+  companies        companies          @relation(fields: [companyId], references: [id], map: "ContactLists_companyId_fkey")
+
+  @@index([companyId], map: "ContactLists_companyId_fkey")
+}
+
+model contacts {
+  id                    Int                     @id @default(autoincrement())
+  name                  String
+  number                String                  @unique
+  email                 String                  @default("")
+  profilePicUrl         String                  @default("")
+  isGroup               Boolean                 @default(false)
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime
+  companyId             Int
+  whatsappId            Int
+  contact_custom_fields contact_custom_fields[]
+  companies             companies               @relation(fields: [companyId], references: [id])
+  whatsapps             whatsapps               @relation(fields: [whatsappId], references: [id])
+  messages              messages[]
+  schedules             schedules[]
+  ticketnotes           ticketnotes[]
+  tickets               tickets[]
+
+  @@index([companyId], map: "contacts_companyId_fkey")
+  @@index([whatsappId], map: "contacts_whatsappId_fkey")
+}
+
+model files {
+  id           Int            @id @default(autoincrement())
+  name         String
+  message      String
+  companyId    Int
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime
+  campaigns    campaigns[]
+  companies    companies      @relation(fields: [companyId], references: [id], map: "Files_companyId_fkey")
+  filesoptions filesoptions[]
+
+  @@index([companyId], map: "Files_companyId_fkey")
+}
+
+model filesoptions {
+  id        Int      @id @default(autoincrement())
+  name      String
+  path      String
+  mediaType String
+  fileId    Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+  files     files    @relation(fields: [fileId], references: [id], map: "FilesOptions_fileId_fkey")
+
+  @@index([fileId], map: "FilesOptions_fileId_fkey")
+}
+
+model helps {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String
+  video       String
+  link        String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime
+}
+
+model invoices {
+  id        Int      @id @default(autoincrement())
+  detail    String
+  status    String
+  value     Float
+  dueDate   String
+  companyId Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+}
+
+model messages {
+  id             String     @id
+  remoteJid      String
+  participant    String
+  dataJson       String
+  ack            Int        @default(0)
+  read           Boolean    @default(false)
+  fromMe         Boolean    @default(false)
+  body           String
+  mediaUrl       String?
+  mediaType      String
+  isDeleted      Boolean    @default(false)
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime
+  quotedMsgId    String?
+  ticketId       Int
+  contactId      Int
+  companyId      Int
+  queueId        Int
+  isEdited       Boolean    @default(false)
+  companies      companies  @relation(fields: [companyId], references: [id])
+  contacts       contacts   @relation(fields: [contactId], references: [id])
+  queues         queues     @relation(fields: [queueId], references: [id])
+  messages       messages?  @relation("messagesTomessages", fields: [quotedMsgId], references: [id])
+  other_messages messages[] @relation("messagesTomessages")
+  tickets        tickets    @relation(fields: [ticketId], references: [id])
+
+  @@index([companyId], map: "messages_companyId_fkey")
+  @@index([contactId], map: "messages_contactId_fkey")
+  @@index([queueId], map: "messages_queueId_fkey")
+  @@index([quotedMsgId], map: "messages_quotedMsgId_fkey")
+  @@index([ticketId], map: "messages_ticketId_fkey")
+}
+
+model plans {
+  id              Int         @id @default(autoincrement())
+  name            String      @unique
+  users           Int
+  connections     Int
+  queues          Int
+  value           Int
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime?
+  useSchedules    Boolean     @default(false)
+  useCampaigns    Boolean     @default(false)
+  useInternalChat Boolean     @default(false)
+  useExternalApi  Boolean     @default(false)
+  useKanban       Boolean     @default(false)
+  useOpenAi       Boolean     @default(false)
+  useIntegrations Boolean     @default(false)
+  companies       companies[]
+}
+
+model prompts {
+  id               Int         @id @default(autoincrement())
+  name             String
+  prompt           String
+  apiKey           String
+  maxMessages      Int         @default(10)
+  maxTokens        Int         @default(100)
+  temperature      Int         @default(1)
+  promptTokens     Int         @default(0)
+  completionTokens Int         @default(0)
+  totalTokens      Int         @default(0)
+  voice            String
+  voiceKey         String?
+  voiceRegion      String?
+  queueId          Int?
+  companyId        Int
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime?
+  companies        companies   @relation(fields: [companyId], references: [id])
+  queues           queues?     @relation(fields: [queueId], references: [id])
+  tickets          tickets[]
+  whatsapps        whatsapps[]
+
+  @@index([companyId], map: "prompts_companyId_fkey")
+  @@index([queueId], map: "prompts_queueId_fkey")
+}
+
+model queue_integrations {
+  id                    Int         @id @default(autoincrement())
+  type                  String
+  name                  String
+  projectName           String
+  jsonContent           String
+  urlN8N                String
+  language              String
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime
+  companyId             Int
+  typebotSlug           String
+  typebotExpires        Int         @default(0)
+  typebotKeywordFinish  String
+  typebotUnknownMessage String
+  typebotDelayMessage   Int         @default(1000)
+  typebotKeywordRestart String
+  typebotRestartMessage String
+  companies             companies   @relation(fields: [companyId], references: [id])
+  queues                queues[]
+  tickets               tickets[]
+  whatsapps             whatsapps[]
+
+  @@index([companyId], map: "queue_integrations_companyId_fkey")
+}
+
+model queue_options {
+  id                  Int             @id @default(autoincrement())
+  title               String
+  message             String?
+  option              String?
+  queueId             Int
+  parentId            Int?
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime
+  queue_options       queue_options?  @relation("queue_optionsToqueue_options", fields: [parentId], references: [id])
+  other_queue_options queue_options[] @relation("queue_optionsToqueue_options")
+  queues              queues          @relation(fields: [queueId], references: [id])
+  tickets             tickets[]
+
+  @@index([parentId], map: "queue_options_parentId_fkey")
+  @@index([queueId], map: "queue_options_queueId_fkey")
+}
+
+model queues {
+  id                 Int                @id @default(autoincrement())
+  name               String             @unique
+  color              String             @unique
+  greetingMessage    String             @default("")
+  outOfHoursMessage  String             @default("")
+  schedules          Json
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime?
+  companyId          Int
+  orderQueue         Int
+  integrationId      Int
+  promptId           Int
+  messages           messages[]
+  prompts            prompts[]
+  queue_options      queue_options[]
+  companies          companies?          @relation(fields: [companyId], references: [id])
+  queue_integrations queue_integrations? @relation(fields: [integrationId], references: [id])
+  tickets            tickets[]
+  userqueues         userqueues[]
+  whatsapp_queues    whatsapp_queues[]
+  users              users[]            @relation("userqueues")
+  whatsapps          whatsapps[]        @relation("whatsappqueues")
+
+  @@index([companyId], map: "queues_companyId_fkey")
+  @@index([integrationId], map: "queues_integrationId_fkey")
+}
+
+model quick_messages {
+  id        Int       @id @default(autoincrement())
+  shortcode String
+  message   String
+  companyId Int
+  userId    Int
+  createdAt DateTime  @default(now())
+  updatedAt DateTime
+  mediaPath String?
+  mediaName String?
+  companies companies @relation(fields: [companyId], references: [id])
+  users     users     @relation(fields: [userId], references: [id])
+
+  @@index([companyId], map: "quick_messages_companyId_fkey")
+  @@index([userId], map: "quick_messages_userId_fkey")
+}
+
+model schedules {
+  id        Int       @id @default(autoincrement())
+  body      String
+  sendAt    DateTime
+  sentAt    DateTime?
+  contactId Int
+  ticketId  Int
+  userId    Int
+  companyId Int
+  status    String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime
+  mediaPath String?
+  mediaName String?
+  companies companies @relation(fields: [companyId], references: [id])
+  contacts  contacts  @relation(fields: [contactId], references: [id])
+  tickets   tickets   @relation(fields: [ticketId], references: [id])
+  users     users     @relation(fields: [userId], references: [id])
+
+  @@index([companyId], map: "schedules_companyId_fkey")
+  @@index([contactId], map: "schedules_contactId_fkey")
+  @@index([ticketId], map: "schedules_ticketId_fkey")
+  @@index([userId], map: "schedules_userId_fkey")
+}
+
+model settings {
+  id        Int       @id @default(autoincrement())
+  key       String
+  value     String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime
+  companyId Int
+  companies companies @relation(fields: [companyId], references: [id])
+
+  @@index([companyId], map: "settings_companyId_fkey")
+}
+
+model subscriptions {
+  id                     Int       @id @default(autoincrement())
+  isActive               Boolean
+  userPriceCents         Int?
+  whatsPriceCents        Int?
+  lastInvoiceUrl         String?
+  lastPlanChange         DateTime?
+  expiresAt              DateTime?
+  providerSubscriptionId String?
+  companyId              Int
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime
+}
+
+model tags {
+  id                             Int           @id @default(autoincrement())
+  name                           String
+  color                          String
+  companyId                      Int
+  createdAt                      DateTime      @default(now())
+  updatedAt                      DateTime
+  kanban                         Int
+  ticketId                       Int?
+  companies                      companies     @relation(fields: [companyId], references: [id])
+  tickets_tags_ticketIdTotickets tickets?      @relation("tags_ticketIdTotickets", fields: [ticketId], references: [id])
+  ticket_tags                    ticket_tags[]
+  tickets_tickettags             tickets[]     @relation("tickettags")
+
+  @@index([companyId], map: "tags_companyId_fkey")
+  @@index([ticketId], map: "tags_ticketId_fkey")
+}
+
+model ticket_tags {
+  ticketId  Int
+  tagId     Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+  tags      tags     @relation(fields: [tagId], references: [id])
+  tickets   tickets  @relation(fields: [ticketId], references: [id])
+
+  @@id([ticketId, tagId])
+  @@index([tagId], map: "ticket_tags_tagId_fkey")
+}
+
+model ticketnotes {
+  id        Int      @id @default(autoincrement())
+  note      String
+  userId    Int
+  contactId Int
+  ticketId  Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+  contacts  contacts @relation(fields: [contactId], references: [id], map: "TicketNotes_contactId_fkey")
+  tickets   tickets  @relation(fields: [ticketId], references: [id], map: "TicketNotes_ticketId_fkey")
+  users     users    @relation(fields: [userId], references: [id], map: "TicketNotes_userId_fkey")
+
+  @@index([contactId], map: "TicketNotes_contactId_fkey")
+  @@index([ticketId], map: "TicketNotes_ticketId_fkey")
+  @@index([userId], map: "TicketNotes_userId_fkey")
+}
+
+model tickets {
+  id                          Int                @id @default(autoincrement())
+  status                      String             @default("pending")
+  unreadMessages              Int
+  lastMessage                 String
+  isGroup                     Boolean            @default(false)
+  createdAt                   DateTime           @default(now())
+  updatedAt                   DateTime
+  userId                      Int
+  contactId                   Int
+  whatsappId                  Int
+  queueId                     Int
+  chatbot                     Boolean
+  queueOptionId               Int
+  companyId                   Int
+  uuid                        String
+  useIntegration              Boolean            @default(false)
+  integrationId               Int
+  typebotSessionId            String
+  typebotStatus               Boolean            @default(false)
+  promptId                    Int
+  fromMe                      Boolean
+  amountUsedBotQueues         Int                @default(0)
+  messages                    messages[]
+  schedules                   schedules[]
+  tags_tags_ticketIdTotickets tags[]             @relation("tags_ticketIdTotickets")
+  ticket_tags                 ticket_tags[]
+  ticketnotes                 ticketnotes[]
+  companies                   companies          @relation(fields: [companyId], references: [id])
+  contacts                    contacts           @relation(fields: [contactId], references: [id])
+  queue_integrations          queue_integrations @relation(fields: [integrationId], references: [id])
+  prompts                     prompts            @relation(fields: [promptId], references: [id])
+  queues                      queues             @relation(fields: [queueId], references: [id])
+  queue_options               queue_options      @relation(fields: [queueOptionId], references: [id])
+  users                       users              @relation(fields: [userId], references: [id])
+  whatsapps                   whatsapps          @relation(fields: [whatsappId], references: [id])
+  tickettraking               tickettraking[]
+  userratings                 userratings[]
+  tags_tickettags             tags[]             @relation("tickettags")
+
+  @@index([companyId], map: "tickets_companyId_fkey")
+  @@index([contactId], map: "tickets_contactId_fkey")
+  @@index([integrationId], map: "tickets_integrationId_fkey")
+  @@index([promptId], map: "tickets_promptId_fkey")
+  @@index([queueId], map: "tickets_queueId_fkey")
+  @@index([queueOptionId], map: "tickets_queueOptionId_fkey")
+  @@index([userId], map: "tickets_userId_fkey")
+  @@index([whatsappId], map: "tickets_whatsappId_fkey")
+}
+
+model tickettraking {
+  id         Int       @id @default(autoincrement())
+  ticketId   Int
+  companyId  Int
+  whatsappId Int
+  userId     Int
+  rated      Boolean
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime
+  startedAt  DateTime
+  queuedAt   DateTime
+  finishedAt DateTime
+  ratingAt   DateTime
+  chatbotAt  DateTime
+  companies  companies @relation(fields: [companyId], references: [id], map: "TicketTraking_companyId_fkey")
+  tickets    tickets   @relation(fields: [ticketId], references: [id], map: "TicketTraking_ticketId_fkey")
+  users      users     @relation(fields: [userId], references: [id], map: "TicketTraking_userId_fkey")
+  whatsapps  whatsapps @relation(fields: [whatsappId], references: [id], map: "TicketTraking_whatsappId_fkey")
+
+  @@index([companyId], map: "TicketTraking_companyId_fkey")
+  @@index([ticketId], map: "TicketTraking_ticketId_fkey")
+  @@index([userId], map: "TicketTraking_userId_fkey")
+  @@index([whatsappId], map: "TicketTraking_whatsappId_fkey")
+}
+
+model userqueues {
+  userId    Int
+  queueId   Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+  queues    queues   @relation(fields: [queueId], references: [id], map: "UserQueues_queueId_fkey")
+  users     users    @relation(fields: [userId], references: [id], map: "UserQueues_userId_fkey")
+
+  @@id([userId, queueId])
+  @@index([queueId], map: "UserQueues_queueId_fkey")
+}
+
+model userratings {
+  id        Int       @id @default(autoincrement())
+  ticketId  Int
+  companyId Int
+  userId    Int
+  rate      Int
+  createdAt DateTime  @default(now())
+  updatedAt DateTime
+  companies companies @relation(fields: [companyId], references: [id], map: "UserRatings_companyId_fkey")
+  tickets   tickets   @relation(fields: [ticketId], references: [id], map: "UserRatings_ticketId_fkey")
+  users     users     @relation(fields: [userId], references: [id], map: "UserRatings_userId_fkey")
+
+  @@index([companyId], map: "UserRatings_companyId_fkey")
+  @@index([ticketId], map: "UserRatings_ticketId_fkey")
+  @@index([userId], map: "UserRatings_userId_fkey")
+}
+
+model users {
+  id             Int              @id @default(autoincrement())
+  name           String
+  email          String           @unique
+  passwordHash   String
+  tokenVersion   Int              @default(0)
+  profile        String           @default("admin")
+  super          Boolean
+  online         Boolean?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime?
+  companyId      Int
+  whatsappId     Int?
+  chatmessages   chatmessages[]
+  chats          chats[]
+  chatusers      chatusers[]
+  quick_messages quick_messages[]
+  schedules      schedules[]
+  ticketnotes    ticketnotes[]
+  tickets        tickets[]
+  tickettraking  tickettraking[]
+  userqueues     userqueues[]
+  userratings    userratings[]
+  companies      companies?        @relation(fields: [companyId], references: [id])
+  whatsapps      whatsapps?       @relation(fields: [whatsappId], references: [id])
+  queues         queues[]         @relation("userqueues")
+
+  @@index([companyId], map: "users_companyId_fkey")
+  @@index([whatsappId], map: "users_whatsappId_fkey")
+}
+
+model whatsapp_queues {
+  whatsappId Int
+  queueId    Int
+  createdAt  DateTime?  @default(now())
+  updatedAt  DateTime?
+  queues     queues    @relation(fields: [queueId], references: [id])
+  whatsapps  whatsapps @relation(fields: [whatsappId], references: [id])
+
+  @@id([whatsappId, queueId])
+  @@index([queueId], map: "whatsapp_queues_queueId_fkey")
+}
+
+model whatsapps {
+  id                     Int                @id @default(autoincrement())
+  name                   String?            @unique
+  session                String
+  qrcode                 String
+  status                 String
+  battery                String?
+  plugged                Boolean?
+  retries                Int
+  greetingMessage        String             @default("")
+  farewellMessage        String             @default("")
+  completionMessage      String             @default("")
+  outOfHoursMessage      String             @default("")
+  ratingMessage          String             @default("")
+  provider               String             @default("stable")
+  isDefault              Boolean?           @default(false)
+  createdAt              DateTime           @default(now())
+  updatedAt              DateTime
+  companyId              Int
+  token                  String?
+  transferQueueId        Int?
+  timeToTransfer         Int?
+  promptId               Int?
+  integrationId          Int?
+  maxUseBotQueues        Int?
+  timeUseBotQueues       String?
+  expiresTicket          Int?
+  expiresInactiveMessage String?
+  baileys                baileys[]
+  baileyschats           baileyschats[]
+  campaigns              campaigns[]
+  contacts               contacts[]
+  tickets                tickets[]
+  tickettraking          tickettraking[]
+  users                  users[]
+  whatsapp_queues        whatsapp_queues[]
+  companies              companies          @relation(fields: [companyId], references: [id])
+  queue_integrations     queue_integrations? @relation(fields: [integrationId], references: [id])
+  prompts                prompts?           @relation(fields: [promptId], references: [id])
+  queues                 queues[]           @relation("whatsappqueues")
+
+  @@index([companyId], map: "whatsapps_companyId_fkey")
+  @@index([integrationId], map: "whatsapps_integrationId_fkey")
+  @@index([promptId], map: "whatsapps_promptId_fkey")
+}
